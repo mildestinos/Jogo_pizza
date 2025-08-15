@@ -113,9 +113,3 @@ Você pode modificar o código e testar suas próprias ideias para aprender mais
 Fique à vontade para enviar melhorias ou criar novas funcionalidades.
 Vamos aprender Python juntos! 🚀
 
-```
-
----
-
-Se quiser, eu já posso **salvar esse README.md na pasta do seu projeto** pronto para commit no GitHub. Quer que eu já gere o arquivo?
-```
