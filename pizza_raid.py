@@ -6,8 +6,13 @@ Versão: 2.0 (SFX + Boss + Tela de Vitória)
 Data: 2025-08-16
 """
 
-import pygame
+import math
 import random
+import sys
+from array import array
+from pathlib import Path
+
+import pygame
 
 # --- Configurações iniciais ---
 SCREEN_WIDTH = 400
@@ -56,14 +61,31 @@ BOSS_BULLET_SPEED = 6
 BOSS_SHOOT_COOLDOWN = 45  # frames entre disparos
 
 
-def desenhar_pizza(screen, pizza_rect):
-    center = (pizza_rect.x + PIZZA_RADIUS, pizza_rect.y + PIZZA_RADIUS)
-    pygame.draw.circle(screen, YELLOW, center, PIZZA_RADIUS)
+def caminho_recurso(caminho_relativo):
+    """Resolve recursos no código-fonte e no executável criado pelo PyInstaller."""
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base / caminho_relativo
+
+
+def criar_sprite_pizza():
+    """Cria a pizza uma única vez, evitando pepperonis piscando a cada frame."""
+    tamanho = PIZZA_RADIUS * 2
+    sprite = pygame.Surface((tamanho, tamanho), pygame.SRCALPHA)
+    centro = (PIZZA_RADIUS, PIZZA_RADIUS)
+    pygame.draw.circle(sprite, YELLOW, centro, PIZZA_RADIUS)
+
     for _ in range(5):
-        offset_x = random.randint(-PIZZA_RADIUS + 4, PIZZA_RADIUS - 4)
-        offset_y = random.randint(-PIZZA_RADIUS + 4, PIZZA_RADIUS - 4)
-        pepperoni = (center[0] + offset_x, center[1] + offset_y)
-        pygame.draw.circle(screen, RED, pepperoni, 3)
+        while True:
+            offset_x = random.randint(-PIZZA_RADIUS + 4, PIZZA_RADIUS - 4)
+            offset_y = random.randint(-PIZZA_RADIUS + 4, PIZZA_RADIUS - 4)
+            if offset_x ** 2 + offset_y ** 2 <= (PIZZA_RADIUS - 4) ** 2:
+                break
+        pygame.draw.circle(sprite, RED, (centro[0] + offset_x, centro[1] + offset_y), 3)
+    return sprite
+
+
+def desenhar_pizza(screen, pizza_rect, sprite):
+    screen.blit(sprite, pizza_rect)
 
 
 def desenhar_pizzaiolo(screen, rect):
@@ -152,6 +174,7 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
     font_big = pygame.font.SysFont(None, 56)
+    pizza_sprite = criar_sprite_pizza()
 
     # --- Áudio / SFX ---
     SHOOT_SFX_PATH = "assets/shoot.wav"
@@ -159,22 +182,43 @@ def main():
     BOSS_SHOOT_SFX_PATH = "assets/boss_shoot.wav"  # opcional
     BOSS_HIT_SFX_PATH = "assets/boss_hit.wav"      # opcional
 
-    if not pygame.mixer.get_init():
-        pygame.mixer.init(frequency=44100, size=-16, channels=1, buffer=512)
-    pygame.mixer.set_num_channels(16)
-
-    def carregar_som(path, vol=0.7):
+    audio_disponivel = pygame.mixer.get_init() is not None
+    if not audio_disponivel:
         try:
-            s = pygame.mixer.Sound(path)
-            s.set_volume(vol)
-            return s
-        except Exception:
-            return None
+            pygame.mixer.init(frequency=44100, size=-16, channels=1, buffer=512)
+            audio_disponivel = True
+        except pygame.error as erro:
+            print(f"Áudio indisponível; o jogo continuará sem som: {erro}")
 
-    shoot_sfx = carregar_som(SHOOT_SFX_PATH, 0.75)
-    hit_sfx = carregar_som(HIT_SFX_PATH, 0.8)
-    boss_shoot_sfx = carregar_som(BOSS_SHOOT_SFX_PATH, 0.7)
-    boss_hit_sfx = carregar_som(BOSS_HIT_SFX_PATH, 0.8)
+    if audio_disponivel:
+        pygame.mixer.set_num_channels(16)
+
+    def criar_tom(frequencia, duracao=0.08, volume=0.35):
+        """Gera um efeito simples quando o arquivo WAV não estiver disponível."""
+        if not audio_disponivel:
+            return None
+        quantidade = int(44100 * duracao)
+        amplitude = int(32767 * volume)
+        amostras = array(
+            "h",
+            (int(amplitude * math.sin(2 * math.pi * frequencia * i / 44100)) for i in range(quantidade)),
+        )
+        return pygame.mixer.Sound(buffer=amostras)
+
+    def carregar_som(path, vol=0.7, tom_reserva=440):
+        if not audio_disponivel:
+            return None
+        try:
+            som = pygame.mixer.Sound(caminho_recurso(path))
+            som.set_volume(vol)
+            return som
+        except (FileNotFoundError, OSError, pygame.error):
+            return criar_tom(tom_reserva, volume=min(vol, 0.4))
+
+    shoot_sfx = carregar_som(SHOOT_SFX_PATH, 0.75, 780)
+    hit_sfx = carregar_som(HIT_SFX_PATH, 0.8, 300)
+    boss_shoot_sfx = carregar_som(BOSS_SHOOT_SFX_PATH, 0.7, 180)
+    boss_hit_sfx = carregar_som(BOSS_HIT_SFX_PATH, 0.8, 120)
 
     # --- Estados ---
     PLAYING = "PLAYING"
@@ -254,7 +298,7 @@ def main():
             for pizza in pizzas:
                 pizza.y += PIZZA_SPEED + SCROLL_SPEED
                 if pizza.y > SCREEN_HEIGHT:
-                    pizza.x = random.randint(50 + PIZZA_RADIUS, SCREEN_WIDTH - 50 - PIZZA_RADIUS)
+                    pizza.x = random.randint(50 + PIZZA_RADIUS, SCREEN_WIDTH - 50 - PIZZA_RADIUS) - PIZZA_RADIUS
                     pizza.y = random.randint(-600, -20)
 
             # Atualiza tiros do jogador + colisões
@@ -281,7 +325,7 @@ def main():
                 for pizza in pizzas:
                     if bullet.colliderect(pizza):
                         bullets.remove(bullet)
-                        pizza.x = random.randint(50 + PIZZA_RADIUS, SCREEN_WIDTH - 50 - PIZZA_RADIUS)
+                        pizza.x = random.randint(50 + PIZZA_RADIUS, SCREEN_WIDTH - 50 - PIZZA_RADIUS) - PIZZA_RADIUS
                         pizza.y = random.randint(-600, -20)
                         score += 10
                         if hit_sfx:
@@ -337,7 +381,7 @@ def main():
 
         # Pizzas
         for pizza in pizzas:
-            desenhar_pizza(screen, pizza)
+            desenhar_pizza(screen, pizza, pizza_sprite)
 
         # Tiros do jogador
         for bullet in bullets:
