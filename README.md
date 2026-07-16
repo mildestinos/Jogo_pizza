@@ -1,6 +1,10 @@
-# 🍕 Pizza Raid
+# Pizza Raid
 
-Jogo 2D desenvolvido em Python com Pygame, inspirado na dinâmica dos jogos clássicos de nave. O jogador percorre o rio, enfrenta pizzas voadoras e, ao atingir 150 pontos, encara o chefão Pizzaiolo.
+Jogo 2D desenvolvido em Python com Pygame. O projeto aplica conceitos de orientação a objetos, eventos, colisões, controle de estado e empacotamento de aplicações desktop.
+
+## Sobre o jogo
+
+O participante percorre o cenário, enfrenta pizzas voadoras e, ao atingir 150 pontos, encara o chefão Pizzaiolo.
 
 ## Funcionalidades
 
@@ -8,18 +12,21 @@ Jogo 2D desenvolvido em Python com Pygame, inspirado na dinâmica dos jogos clá
 - Sistema de disparos e colisões
 - Pontuação e reinício da partida
 - Chefão com barra de vida e disparos próprios
-- Tela de vitória e de game over
-- Efeitos sonoros com alternativa gerada pelo próprio jogo
-- Suporte à criação de executável com PyInstaller
+- Telas de vitória e game over
+- Efeitos sonoros com alternativa gerada pelo jogo
+- Geração de executável com PyInstaller
 
-## Requisitos
+## Tecnologias
 
-- Python 3.8 ou superior
-- Pygame 2.5 ou superior
+- Python 3.8+
+- Pygame 2.5+
+- PyInstaller
 
 ## Instalação
 
 ```bash
+git clone https://github.com/mildestinos/Jogo_pizza.git
+cd Jogo_pizza
 python -m venv .venv
 ```
 
@@ -37,44 +44,55 @@ Ative o ambiente virtual:
 source .venv/bin/activate
 ```
 
-Instale as dependências:
+Instale as dependências e execute:
 
 ```bash
 python -m pip install -r requirements.txt
-```
-
-## Como jogar
-
-```bash
 python pizza_raid.py
 ```
+
+## Controles
 
 | Comando | Ação |
 |---|---|
 | Seta esquerda | Mover para a esquerda |
 | Seta direita | Mover para a direita |
 | Espaço | Disparar |
-| Enter | Reiniciar após o fim da partida |
+| Enter | Reiniciar após o encerramento |
 | Esc | Sair |
 
-## Criar o executável
+## Gerar executável
 
 ```bash
 python -m pip install pyinstaller
 pyinstaller pizza_raid.spec
 ```
 
-O executável será criado na pasta `dist`.
+O executável será disponibilizado na pasta `dist`.
 
 ## Estrutura principal
 
-- `pizza_raid.py`: código do jogo
+- `pizza_raid.py`: código-fonte do jogo
 - `pizza_raid.spec`: configuração do PyInstaller
 - `requirements.txt`: dependências do projeto
 
-## Próximas evoluções
+## Competências demonstradas
+
+- Programação em Python
+- Desenvolvimento com loop de eventos
+- Detecção de colisões
+- Controle de estados do jogo
+- Gestão de dependências
+- Empacotamento de aplicações
+
+## Roadmap
 
 - Ranking local de pontuação
 - Novos inimigos e níveis de dificuldade
 - Testes automatizados para pontuação e colisões
+- Organização dos artefatos de build fora do código-fonte
 - Sprites e animações personalizados
+
+## Autor
+
+Desenvolvido por [Eric Vieira](https://github.com/mildestinos).
